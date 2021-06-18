@@ -1,5 +1,5 @@
-
-# avraudiobootloader
+# AVR audio bootloader
+[![Build Status](https://travis-ci.com/orukusaki/avr-audio-bootloader.svg?branch=main)](https://travis-ci.com/orukusaki/avr-audio-bootloader)
 
 A bootloader for the ATmega328P, which enables firmware updates via an audio signal, based on the work of Christoph Haberer. It takes less than 1K of flash memory.
 Encode your project firmware using [hex2wav](https://github.com/orukusaki/hex2wav-rs).  The resulting .wav file can be played using the headphone port of any laptop/phone etc into your project to update the firmware.
