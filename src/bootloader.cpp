@@ -1,37 +1,42 @@
-#include <avr/io.h>
+#include "bootloader.h"
+#include <avr/boot.h>
 #include <avr/interrupt.h>
 #include <stdlib.h>
-#include <avr/boot.h>
 #include <util/crc16.h>
-#include "bootloader.h"
-
-#define true 1
-#define false 0
-
-#define PINVALUE (ACSR & _BV(ACO))
 
 // bootloader commands
-#define PROGCOMMAND     2
-#define RUNCOMMAND      3
+constexpr uint8_t PROGCOMMAND = 2;
+constexpr uint8_t RUNCOMMAND = 3;
 
-#define METASIZE 5
-#define PAGESIZE SPM_PAGESIZE
-#define FRAMESIZE (PAGESIZE + METASIZE)
+constexpr uint8_t METASIZE = 5;
+constexpr uint8_t FRAMESIZE = SPM_PAGESIZE + METASIZE;
 
 union {
 	uint8_t bytes[FRAMESIZE];
 	struct {
 		uint8_t command;
 		uint16_t pageIndex;
-		uint8_t page[PAGESIZE];
+		uint8_t page[SPM_PAGESIZE];
 		uint16_t checksum;
 	} data;
 } frame;
 
-void (*app_start)(void) = 0x0000;
+static volatile inline uint8_t pinValue() {
+	return ACSR & _BV(ACO);
+}
 
-uint8_t receiveFrame();
-void boot_program_page (uint32_t page, uint8_t *buf);
+static inline uint8_t wait_for_edge(uint8_t pinState)
+{
+	while (pinValue() == pinState) {}
+
+	return pinValue();
+}
+
+static void wait_for_time(uint16_t delayTime)
+{
+	TIMER = 0;
+	while (TIMER < delayTime) {}
+}
 
 void runBootloader()
 {
@@ -46,16 +51,11 @@ void runBootloader()
 	DIDR1 = _BV(AIN0D) | _BV(AIN1D);
 
 	TCCR1A = 0;
-	TCCR1B= _BV(CS11);
+	TCCR1B = _BV(CS11);
 
 	onStartRecieve();
 
-	while (1) {
-
-		if (!receiveFrame()) {
-			onBadFrame();
-			while (1);
-		}
+	while (receiveFrame()) {
 
 		onGoodFrame();
 
@@ -68,81 +68,55 @@ void runBootloader()
 			boot_program_page(address, (uint8_t*) &(frame.data.page));
 		}
 	}
-}
 
-static inline uint8_t wait_for_edge(uint8_t pinState)
-{
-	while (pinState == PINVALUE);
-	return PINVALUE;
+	onBadFrame();
+	while (1) {}
 }
 
 uint8_t receiveFrame()
 {
-	uint16_t stepTime;
   uint16_t totalTime = 0;
   uint16_t delayTime;
-
-  uint8_t pinState = PINVALUE;
-	uint8_t newPinState;
-
-  uint8_t byteIndex=0;
-
+  uint8_t pinState = pinValue();
+  uint8_t byteIndex = 0;
 	uint16_t checksum = 0;
 
-  //*** synchronisation and bit rate estimation **************************
-
+  //synchronisation and bit rate estimation
 	pinState = wait_for_edge(pinState);
 
-  TIMER = 0;
-  for(uint8_t i = 0; i < 16; i++) {
+  for (uint8_t i = 0; i < 16; i++) {
 
-		pinState = wait_for_edge(pinState);
-		stepTime = TIMER;
 		TIMER = 0;
+		pinState = wait_for_edge(pinState);
 
     if(i >= 8) {
-			totalTime += stepTime;
-		} // time accumulator for mean period calculation only the last 8 times are used
+			totalTime += TIMER;
+		}
   }
 
   delayTime = totalTime * 3 / 4 / 8;
 
-  while (TIMER < delayTime);
+	// Wait for start (1) bit
+  do {
+  	pinState = wait_for_edge(pinState);
+		wait_for_time(delayTime);
+  } while (pinState == pinValue());
+  pinState = pinValue();
 
-  //****************** wait for start bit ***************************
-  while(pinState == PINVALUE)
-  {
-		pinState = wait_for_edge(pinState);
-		TIMER=0;
-
-    while(TIMER < delayTime);
-
-		TIMER = 0;
-  }
-  pinState = PINVALUE;
-
-  //****************************************************************
   //receive data bits
-  for (uint16_t n = 0; n < (FRAMESIZE*8); n++) {
+  for (uint16_t n = 0; n < (FRAMESIZE * 8); n++) {
 
 		pinState = wait_for_edge(pinState);
+		wait_for_time(delayTime);
 
-		TIMER = 0;
-
-		// delay 3/4 bit
-		while (TIMER < delayTime);
-
-		newPinState = PINVALUE;
+		uint8_t newPinState = pinValue();
 
 		frame.bytes[byteIndex] <<= 1;
-
-		if (pinState != newPinState) {
-			frame.bytes[byteIndex] |= 1;
-		}
+		frame.bytes[byteIndex] |= (pinState != newPinState);
 
 		pinState = newPinState;
 
-		if (n & 0x7) {
+		if ((n & 0x7) == 0x7) {  // every 8th bit
 
 			if (byteIndex < FRAMESIZE - 2) {
 					checksum = _crc_xmodem_update(checksum, frame.bytes[byteIndex]);
@@ -158,16 +132,15 @@ uint8_t receiveFrame()
   return (checksum == frame.data.checksum);
 }
 
-void boot_program_page (uint32_t page, uint8_t *buf)
+void boot_program_page(uint32_t page, uint8_t *buf)
 {
-	uint16_t w;
   cli();
 
-  boot_page_erase (page);
+  boot_page_erase(page);
   boot_spm_busy_wait();
 
 	for (uint16_t i = 0; i < SPM_PAGESIZE; i += 2) {
-		w = *buf++;
+		uint16_t w = *buf++;
 		w |= (*buf++) << 8;
 
 		boot_page_fill(page + i, w);
@@ -179,12 +152,10 @@ void boot_program_page (uint32_t page, uint8_t *buf)
   boot_rww_enable();
 }
 
-void runProgram(void)
+void runProgram()
 {
-
 	beforeRunProgram();
 
-	// reintialize registers to default
 	DDRB=0;
 	DDRC=0;
 	DDRD=0;
@@ -195,12 +166,6 @@ void runProgram(void)
 	// restore interrupts
 	MCUCR &= ~_BV(IVSEL);
 
-	// start user programm
-	// asm volatile(
-	// "clr r30	\n\t"
-	// "clr r31	\n\t"	// z Register mit Adresse laden
-	// "ijmp		\n\t"	// z Register mit Adresse laden
-	// );
-
-	app_start();
+	//Jump to address 0
+	((void (*)()) 0)();
 }

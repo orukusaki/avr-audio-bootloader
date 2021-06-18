@@ -3,18 +3,20 @@
 
 #define LEDPORT (1<<PB5);
 
+const uint16_t baud = 9600;
+
 void ledToggle() {
   PORTB^=LEDPORT;
 }
 
 void setup()
 {
-	Serial.begin(9600);
+	Serial.begin(baud);
 }
 
 void loop()
 {
-	Serial.println("start loop");
+	Serial.println("start");
 	DDRB|=LEDPORT;
 
   runBootloader();
@@ -27,10 +29,12 @@ void onStartRecieve()
 
 void onBadFrame()
 {
+  const uint16_t timerTop = 0xfff;
+  
   Serial.println(":(");
 
   while (1) {
-    if ((TIMER & 0xfff) == 0xfff) {
+    if ((TIMER & timerTop) == timerTop) {
         ledToggle();
     }
   }

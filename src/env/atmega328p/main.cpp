@@ -1,6 +1,6 @@
-#include <avr/io.h>
-#include "spi.h"
 #include "bootloader.h"
+#include "spi.h"
+#include <avr/io.h>
 
 static uint8_t buff[4];
 
