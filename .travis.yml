@@ -46,9 +46,18 @@ jobs:
       script:
           - pio run
           - pio check
+      before_deploy:
+        - git config --local user.name "Peter Smith"
+        - git config --local user.email "peter@orukusaki.co.uk"
+        - name="bootloader-$TRAVIS_TAG"
+        - mkdir $name
+        - cp .pio/build/atmega328p/firmware.hex $name/
+        - cp .pio/build/atmega328p/firmware.elf $name/
+        - cp README.md LICENSE $name/
+        - tar czvf $name.tar.gz $name
       deploy:
         provider: releases
-        file: .pio/build/atmega328p/firmware.hex
+        file: bootloader-$TRAVIS_TAG.tar.gz
         cleanup: false
         on:
           branch: main
