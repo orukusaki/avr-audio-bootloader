@@ -1,3 +1,25 @@
+language: rust
+os:
+  - linux
+  - osx
+  - windows
+cache: cargo
+before_install:
+    - cd encoder
+script:
+  - cargo test --lib --locked
+  - rustup component add rustfmt-preview
+  - cargo fmt --all -- --check
+  - cargo build --release
+before_deploy:
+  - git config --local user.name "Peter Smith"
+  - git config --local user.email "peter@orukusaki.co.uk"
+  - name="hex2wav-$TRAVIS_TAG-$TRAVIS_OS_NAME"
+  - mkdir $name
+  - cp target/$TARGET/release/hex2wav $name/
+  - cp README.md LICENSE $name/
+  - tar czvf $name.tar.gz $name
+
 jobs:
   include:
     - language: python
@@ -17,24 +39,12 @@ jobs:
           - pio run
           - pio check
 
-    - language: rust
-      os:
-        - linux
-        - osx
-        - windows
-      cache: cargo
-      before_install:
-          - cd encoder
-      script:
-        - cargo test --lib --locked
-        - rustup component add rustfmt-preview
-        - cargo fmt --all -- --check
-        - cargo build --release
-      before_deploy:
-        - git config --local user.name "Peter Smith"
-        - git config --local user.email "peter@orukusaki.co.uk"
-        - name="hex2wav-$TRAVIS_TAG-$TRAVIS_OS_NAME"
-        - mkdir $name
-        - cp target/$TARGET/release/hex2wav $name/
-        - cp README.md LICENSE $name/
-        - tar czvf $name.tar.gz $name
+deploy:
+  provider: releases
+  file: hex2wav-$TRAVIS_TAG-$TRAVIS_OS_NAME.tar.gz
+  skip_cleanup: true
+  on:
+    branch: main
+    tags: true
+  api_key:
+    secure: UlhpkjGea6reyn22JNi6di4cpIvcgPTCBKk+XNC7xm1vK+fX0HdYwVqXes7f97jZt6aVp5qN67bxHu105eeFR7semL9WVfiw3WGmxRHpIVVGHb1QTwOnU0BJaZUevLUB9BRpAUMvdmAqlCQOBwmgsohJrBCmGDyKUDSwuSCUbna/oxOrIzlRsBqEMvfBITjGhZtohYaiPI2itTgr07eH45elrnBNxrc8dFqRJKpYlRZyGKPGjnf75RzJlo1r+Wv0yPB8AL71cShkEWxJ5LFsH8LScE8TWEI7Z+kOG32LKPN7lGp5KZn4c5Iby7z4W7oy1dra/4ruqzluDkxBfU3ofDp68O6hhELLMgxz7MXUIFmMqr1Zvqv6g96nd/EnPuj2eJAG/UMNC6pmctU3m1u8kGU2kvMCQIc6crE5IQtAfsRVzm85oe6IODZz5+lXdhlrLA/6UKKl6RjcbJEOEKGLIF72CbhdWmCUjH75mZEiIWso+5lJGAmJ8ddYZax90p+3l/EOcLG8IjjfuafOO0Sb+fAl00i8bBLtJuHzzUY29wYZcaptXGfsdedIht/vxKNcAhOLGdyyhxnCQU1L4XNILpYz4rI/4i3c9Jy1cgtt2ASws9UMCAr+TNf2Wo/zRvokkogkRZ/ee39+4ilISuOFmC7Gra5tXTZGVHGj4hNqBfs=
