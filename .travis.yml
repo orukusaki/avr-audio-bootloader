@@ -17,7 +17,7 @@ before_deploy:
   - name="hex2wav-$TRAVIS_TAG-$TRAVIS_OS_NAME"
   - mkdir $name
   - cp target/$TARGET/release/hex2wav $name/
-  - cp README.md LICENSE $name/
+  - cp ../README.md ../LICENSE $name/
   - tar czvf $name.tar.gz $name
 deploy:
   provider: releases
@@ -53,7 +53,7 @@ jobs:
         - mkdir $name
         - cp .pio/build/atmega328p/firmware.hex $name/
         - cp .pio/build/atmega328p/firmware.elf $name/
-        - cp README.md LICENSE $name/
+        - cp ../README.md ../LICENSE $name/
         - tar czvf $name.tar.gz $name
       deploy:
         provider: releases
