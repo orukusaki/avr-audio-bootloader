@@ -1,16 +1,40 @@
-language: python
-python:
-    - "3.9"
-sudo: false
-cache:
-    directories:
-        - "~/.platformio"
-        - $HOME/.cache/pip
+os:
+  - linux
+  - osx
+  - windows
+jobs:
+  include:
+    - language: python
+      python:
+          - "3.9"
+      sudo: false
+      cache:
+        directories:
+          - "~/.platformio"
+          - $HOME/.cache/pip
+      before_install:
+          - cd bootloader
+      install:
+          - pip install -U platformio
+          - pio update
+      script:
+          - pio run
+          - pio check
 
-install:
-    - pip install -U platformio
-    - pio update
-
-script:
-    - pio run
-    - pio check
+    - language: rust
+      cache: cargo
+      before_install:
+          - cd encoder
+      script:
+        - cargo test --lib --locked
+        - rustup component add rustfmt-preview
+        - cargo fmt --all -- --check
+        - cargo build --release
+      before_deploy:
+        - git config --local user.name "Peter Smith"
+        - git config --local user.email "peter@orukusaki.co.uk"
+        - name="hex2wav-$TRAVIS_TAG-$TRAVIS_OS_NAME"
+        - mkdir $name
+        - cp target/$TARGET/release/hex2wav $name/
+        - cp README.md LICENSE $name/
+        - tar czvf $name.tar.gz $name

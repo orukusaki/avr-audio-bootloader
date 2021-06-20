@@ -1,0 +1,34 @@
+name: hex2wav
+version: "0.1.0"
+author: Peter Smith <peter@orukusaki.co.uk>
+about: Converts an intel .hex firmware file into a .wav using differential manchester encoding
+args:
+    - INPUT_FILE:
+        help: Input file, should be in intel .hex format
+        required: true
+        index: 1
+    - OUTPUT_FILE:
+        help: Output .wav file
+        required: false
+        index: 2
+    - frame_size:
+        short: f
+        long: framesize
+        value_name: SIZE
+        help: "Frame size in bytes"
+        default_value: "128"
+        takes_value: true
+    - cuttoff:
+        short: c
+        long: cuttoff
+        value_name: FREQ
+        help: "low pass filter cuttoff Hz"
+        default_value: "10000"
+        takes_value: true
+    - sample_rate:
+        short: s
+        long: samplerate
+        value_name: SAMPLE_RATE
+        help: "Output file sample rate"
+        default_value: "48000"
+        takes_value: true
