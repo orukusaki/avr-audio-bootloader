@@ -22,7 +22,7 @@ before_deploy:
 deploy:
   provider: releases
   file: hex2wav-$TRAVIS_TAG-$TRAVIS_OS_NAME.tar.gz
-  cleanup: false
+  skip_cleanup: true
   on:
     branch: main
     tags: true
@@ -57,7 +57,7 @@ jobs:
       deploy:
         provider: releases
         file: bootloader-$TRAVIS_TAG.tar.gz
-        cleanup: false
+        skip_cleanup: true
         on:
           branch: main
           tags: true
