@@ -6,7 +6,7 @@ pub fn filter<T>(
     sample_rate: f32,
 ) -> impl Iterator<Item = f32>
 where
-    T: Into<f32>
+    T: Into<f32>,
 {
     let rc = 1.0 / (2.0 * PI * cuttoff);
     let dt = 1.0 / sample_rate;
