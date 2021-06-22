@@ -11,6 +11,7 @@ args:
         help: Output .wav file
         required: false
         index: 2
+        default_value: "firmware.wav"
     - frame_size:
         short: f
         long: framesize

@@ -35,10 +35,7 @@ fn get_options() -> Result<Options, String> {
     let matches = App::from_yaml(yaml).get_matches();
 
     let in_filename = matches.value_of("INPUT_FILE").unwrap().to_string();
-    let out_filename = matches
-        .value_of("OUTPUT_FILE")
-        .unwrap_or("output.wav")
-        .to_string();
+    let out_filename = matches.value_of("OUTPUT_FILE").unwrap().to_string();
 
     let frame_size = matches
         .value_of("frame_size")
