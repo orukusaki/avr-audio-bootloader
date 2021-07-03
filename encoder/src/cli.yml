@@ -19,13 +19,6 @@ args:
         help: "Frame size in bytes"
         default_value: "128"
         takes_value: true
-    - cuttoff:
-        short: c
-        long: cuttoff
-        value_name: FREQ
-        help: "low pass filter cuttoff Hz"
-        default_value: "10000"
-        takes_value: true
     - sample_rate:
         short: s
         long: samplerate

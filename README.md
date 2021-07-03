@@ -39,7 +39,6 @@ Alternatively you can build from source, install Rust using [rustup](https://rus
         -V, --version    Prints version information
 
     OPTIONS:
-        -c, --cuttoff <FREQ>              low pass filter cuttoff Hz [default: 10000]
         -f, --framesize <SIZE>            Frame size in bytes [default: 128]
         -s, --samplerate <SAMPLE_RATE>    Output file sample rate [default: 48000]
 

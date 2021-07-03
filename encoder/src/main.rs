@@ -43,12 +43,6 @@ fn get_options() -> Result<Options, String> {
         .parse::<u16>()
         .map_err(|_| "Frame size should be a number")?;
 
-    let cuttoff = matches
-        .value_of("cuttoff")
-        .unwrap()
-        .parse::<u32>()
-        .map_err(|_| "Cuttoff frequency should be a number")?;
-
     let sample_rate = matches
         .value_of("sample_rate")
         .unwrap()
@@ -59,7 +53,6 @@ fn get_options() -> Result<Options, String> {
         in_filename,
         out_filename,
         frame_size,
-        cuttoff,
         sample_rate,
     })
 }
