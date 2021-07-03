@@ -1,5 +1,4 @@
 mod frame;
-pub mod lpf;
 mod manchester_encoder;
 
 pub use frame::Frame;
@@ -12,7 +11,6 @@ pub struct Options {
     pub in_filename: String,
     pub out_filename: String,
     pub frame_size: u16,
-    pub cuttoff: u32,
     pub sample_rate: u32,
 }
 
@@ -25,14 +23,7 @@ pub fn create_audio_data(content: String, options: &Options) -> Vec<u8> {
     let audio_bytes = frames
         .scan(encoder, |encoder, frame| Some(encoder.encode_frame(frame)))
         .flatten();
-
-    let filtered_audio = lpf::filter(
-        audio_bytes,
-        options.cuttoff as f32,
-        options.sample_rate as f32,
-    );
-
-    filtered_audio.map(|s| s as u8).collect()
+    audio_bytes.map(|s| s as u8).collect()
 }
 
 fn get_firmware_bytes(content: String) -> Vec<u8> {
