@@ -1,11 +1,20 @@
 [package]
 name = "hex2wav"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 clap = {version = "2.33", features = ["yaml"]}
 wav = "1.0.0"
 ihex = "3.0.0"
 itertools = "0.10.0"
-crc = "2"
+crc = "3"
+
+[profile.release]
+lto = true
+opt-level = "s" 
+codegen-units = 1
+panic = "abort"
+
+[profile.release.package."*"]
+opt-level = "s" 
