@@ -6,7 +6,9 @@ os:
 cache: cargo
 install:
   - rustup component add rustfmt-preview
-  - rustup target add avr-unknown-gnu-atmega328
+  - rustup toolchain install nightly
+  - rustup override set nightly
+  - rustup component add rust-src --toolchain nightly
 script:
   - cargo test --lib --locked
   - cargo fmt --all -- --check

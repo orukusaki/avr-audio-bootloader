@@ -16,16 +16,12 @@ impl From<Frame> for Vec<u8> {
         v.push(f.command);
 
         v.append(&mut f.offset.to_le_bytes().to_vec());
-
-        // v.push((f.offset & 0xff) as u8);
-        // v.push((f.offset >> 8) as u8);
         v.append(&mut f.page.to_vec());
 
         let crc = Crc::<u16>::new(&CRC_16_XMODEM);
         let checksum = crc.checksum(&v[4..]);
         println!("address: {:#06x} crc: {:#06x}", f.offset, checksum);
-        v.push((checksum & 0xff) as u8);
-        v.push((checksum >> 8) as u8);
+        v.append(&mut checksum.to_le_bytes().to_vec());
         v
     }
 }
