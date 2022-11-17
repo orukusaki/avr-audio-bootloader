@@ -27,18 +27,18 @@ impl From<Frame> for Vec<u8> {
 }
 
 impl Frame {
-    pub fn bytes_to_frames(bytes: &'_ [u8], frame_size: usize) -> impl Iterator<Item = Frame> + '_ {
+    pub fn bytes_to_frames(bytes: &'_ [u8], page_size: usize) -> impl Iterator<Item = Frame> + '_ {
         bytes
-            .chunks(frame_size)
+            .chunks(page_size)
             .enumerate()
             .map(move |(frame_number, chunk)| {
-                Frame::data((frame_size * frame_number) as u16, chunk, frame_size)
+                Frame::data((page_size * frame_number) as u16, chunk, page_size)
             })
     }
 
-    pub fn data(offset: u16, bytes: &[u8], frame_size: usize) -> Frame {
+    pub fn data(offset: u16, bytes: &[u8], page_size: usize) -> Frame {
         let mut page = bytes.to_vec();
-        while page.len() < frame_size {
+        while page.len() < page_size {
             page.push(0xff);
         }
 
@@ -49,11 +49,11 @@ impl Frame {
         }
     }
 
-    pub fn run(frame_size: usize) -> Frame {
+    pub fn run(page_size: usize) -> Frame {
         Frame {
             command: RUNCOMMAND,
             offset: 0,
-            page: vec![0; frame_size],
+            page: vec![0; page_size],
         }
     }
 }
@@ -87,8 +87,8 @@ mod tests {
     #[test]
     fn test_bytes_are_split_into_numbered_frames() {
         let bytes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        let frame_size = 6;
-        let frames: Vec<Frame> = Frame::bytes_to_frames(&bytes, frame_size).collect();
+        let page_size = 6;
+        let frames: Vec<Frame> = Frame::bytes_to_frames(&bytes, page_size).collect();
 
         let expected = vec![
             Frame {

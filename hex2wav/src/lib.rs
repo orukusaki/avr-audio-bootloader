@@ -7,23 +7,28 @@ pub use manchester_encoder::ManchesterEncoder;
 use ihex::{Reader, Record};
 use std::iter;
 
-pub struct Options {
-    pub in_filename: String,
-    pub out_filename: String,
-    pub frame_size: u16,
-    pub sample_rate: u32,
+pub fn find_page_size(mcu_name: &str) -> Option<usize> {
+    let mcu = avr_mcu::microcontroller(mcu_name);
+
+    mcu.device
+        .address_spaces
+        .iter()
+        .find(|space| space.name == "prog")
+        .and_then(|space| space.segments.first())
+        .and_then(|seg| seg.page_size)
+        .map(|size| size as usize)
 }
 
-pub fn create_audio_data(content: String, options: &Options) -> Vec<u8> {
+pub fn create_audio_data(content: String, page_size: usize) -> Vec<u8> {
     let firmware_bytes = get_firmware_bytes(content);
-    let frames = Frame::bytes_to_frames(&firmware_bytes, options.frame_size.into())
-        .chain(iter::once(Frame::run(options.frame_size.into())));
+    let frames =
+        Frame::bytes_to_frames(&firmware_bytes, page_size).chain(iter::once(Frame::run(page_size)));
 
     let encoder = ManchesterEncoder::new();
     let audio_bytes = frames
         .scan(encoder, |encoder, frame| Some(encoder.encode_frame(frame)))
         .flatten();
-    audio_bytes.map(|s| s as u8).collect()
+    audio_bytes.collect()
 }
 
 fn get_firmware_bytes(content: String) -> Vec<u8> {
@@ -35,7 +40,7 @@ fn get_firmware_bytes(content: String) -> Vec<u8> {
         .fold(Vec::new(), |mut v: Vec<u8>, r| {
             if let Record::Data { offset, mut value } = r {
                 while (v.len() as u16) < offset {
-                    v.push(0u8);
+                    v.push(0xff);
                 }
                 v.append(&mut value);
             }
