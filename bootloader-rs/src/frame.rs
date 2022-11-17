@@ -1,21 +1,17 @@
 use crate::crc;
 use crate::spm;
 
-use atmega_hal::pac::CPU;
-
-//TODO: See if there's some other way of getting this,
-// avr_libc is a big dependency to only use a single const
-use avr_libc::SPM_PAGESIZE;
-
+use const_env__value::value_from_env;
 use core::mem::MaybeUninit;
 
+const SPM_PAGESIZE: usize = value_from_env!("SPM_PAGESIZE": usize);
 const RUNCOMMAND: u8 = 3;
 
 #[repr(C)]
 pub struct Frame {
     pub command: u8,
     pub page_address: u16,
-    page: [u16; SPM_PAGESIZE as usize / 2],
+    page: [u16; SPM_PAGESIZE / 2],
     pub checksum: u16,
 }
 
@@ -74,10 +70,8 @@ pub struct FrameWriter {
 }
 
 impl FrameWriter {
-    pub fn new(cpu: CPU) -> FrameWriter {
-        FrameWriter {
-            pgm: spm::Writer::new(cpu),
-        }
+    pub fn new(pgm: spm::Writer) -> FrameWriter {
+        FrameWriter {pgm}
     }
 
     pub fn write(&self, frame: &Frame) {

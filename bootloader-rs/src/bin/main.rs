@@ -8,14 +8,12 @@ use bootloader_rs::frame::{FrameReceiver, FrameWriter};
 use bootloader_rs::run_program;
 use bootloader_rs::signal::SignalReceiver;
 use bootloader_rs::spi::WriteOnlySpi;
+use bootloader_rs::spm;
 
 use panic_halt as _;
 
 /// # Safety
 /// it's main, it can do what it wants
-/// change to this format to save 8 bytes:
-/// #[export_name = "main"]
-/// pub unsafe extern "C" fn main() -> ! {
 #[avr_device::entry]
 unsafe fn main() -> ! {
     let dp = atmega_hal::Peripherals::steal();
@@ -24,7 +22,7 @@ unsafe fn main() -> ! {
 
     let signal_receiver = SignalReceiver::new(pins.pc3.into_pull_up_input(), dp.ADC, dp.AC, dp.TC0);
     let mut frame_receiver = FrameReceiver::new(signal_receiver);
-    let writer = FrameWriter::new(dp.CPU);
+    let writer = FrameWriter::new(spm::Writer::new(dp.CPU));
 
     let mut spi = WriteOnlySpi::new(
         dp.SPI,

@@ -8,7 +8,10 @@ panic-halt = "0.2.0"
 ufmt = "0.2.0"
 bare-metal = "0.2.5"
 vcell = "0.1.3"
-avr-libc = "0.2.2"
+const_env--value = "0.1"
+
+[build-dependencies]
+avr-mcu = "0.3.5"
 
 [dependencies.arduino-hal]
 git = "https://github.com/rahix/avr-hal"
