@@ -1,4 +1,5 @@
 language: rust
+rust: stable
 os:
   - linux
   - osx
@@ -30,8 +31,9 @@ deploy:
 jobs:
   include:
     - language: rust
-      rust:
-        - nightly
+      rust: nightly
+      os: linux
+      dist: jammy
       addons:
         apt:
           packages:
