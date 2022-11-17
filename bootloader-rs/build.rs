@@ -9,7 +9,6 @@ fn main() {
 }
 
 fn get_spm_page_size() -> Option<u32> {
-
     let current_mcu = avr_mcu::current::mcu().expect("no target cpu specified");
 
     current_mcu

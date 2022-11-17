@@ -71,7 +71,7 @@ pub struct FrameWriter {
 
 impl FrameWriter {
     pub fn new(pgm: spm::Writer) -> FrameWriter {
-        FrameWriter {pgm}
+        FrameWriter { pgm }
     }
 
     pub fn write(&self, frame: &Frame) {
