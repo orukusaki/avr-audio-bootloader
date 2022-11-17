@@ -32,13 +32,16 @@ jobs:
     - language: rust
       rust:
         - nightly
-      os:
-        - linux
+      addons:
+        apt:
+          packages:
+            - gcc-avr
+            - binutils-avr
+            - avr-libc
       cache: cargo
       before_install:
         - sudo apt-get update -qq
       install:
-        - sudo apt-get install -qq gcc-avr binutils-avr avr-libc
         - rustup component add rustfmt-preview
         - rustup component add rust-src --toolchain nightly
       script:
