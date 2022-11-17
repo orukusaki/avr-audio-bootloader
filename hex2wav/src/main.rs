@@ -15,8 +15,7 @@ fn main() {
     let content = fs::read_to_string(&options.input_file).expect("Could not load file");
     let out_path = Path::new(&options.output_file);
     let mut out_file = File::create(&out_path).expect("could not open output file");
-    let page_size =
-        find_page_size(&options.mcu_name).expect("MCU not found");
+    let page_size = find_page_size(&options.mcu_name).expect("MCU not found");
     println!("Found page size for {}: {}", &options.mcu_name, page_size);
 
     let header = Header::new(WAV_FORMAT_PCM, 1, options.sample_rate, 8);
