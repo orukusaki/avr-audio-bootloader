@@ -10,7 +10,7 @@ const RUNCOMMAND: u8 = 3;
 #[repr(C)]
 pub struct Frame {
     pub command: u8,
-    pub page_address: u16,
+    pub page_address: usize,
     page: [u16; SPM_PAGESIZE / 2],
     pub checksum: u16,
 }

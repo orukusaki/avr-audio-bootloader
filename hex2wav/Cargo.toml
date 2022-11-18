@@ -10,12 +10,3 @@ ihex = "3.0.0"
 itertools = "0.10.0"
 crc = "3"
 avr-mcu = "0.3.5"
-
-[profile.release]
-lto = true
-opt-level = "s" 
-codegen-units = 1
-panic = "abort"
-
-[profile.release.package."*"]
-opt-level = "s" 

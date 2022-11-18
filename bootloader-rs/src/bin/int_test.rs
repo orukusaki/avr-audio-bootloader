@@ -27,7 +27,7 @@ const SPM_PAGESIZE: usize = 128;
 #[repr(C)]
 struct Frame {
     command: u8,
-    page_address: u16,
+    page_address: usize,
     page: [u16; SPM_PAGESIZE / 2],
     checksum: u16,
 }
@@ -107,7 +107,7 @@ pub unsafe extern "C" fn main() -> ! {
                 pgm_writer.page_erase(frame.page_address);
 
                 for (i, w) in frame.page.iter().enumerate() {
-                    pgm_writer.page_fill(frame.page_address + (i as u16 * 2), *w);
+                    pgm_writer.page_fill(frame.page_address + (i * 2), *w);
                 }
 
                 pgm_writer.page_write(frame.page_address);

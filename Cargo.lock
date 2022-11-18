@@ -110,7 +110,6 @@ dependencies = [
  "atmega-hal",
  "avr-device",
  "avr-mcu",
- "bare-metal",
  "const_env--value",
  "panic-halt",
  "ufmt 0.2.0",

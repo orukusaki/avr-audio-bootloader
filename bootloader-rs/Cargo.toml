@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 panic-halt = "0.2.0"
 ufmt = "0.2.0"
-bare-metal = "0.2.5"
 vcell = "0.1.3"
 const_env--value = "0.1"
 
@@ -15,7 +14,7 @@ avr-mcu = "0.3.5"
 
 [dependencies.arduino-hal]
 git = "https://github.com/rahix/avr-hal"
-features = ["arduino-uno", "rt"]
+features = ["arduino-uno"]
 
 [dependencies.atmega-hal]
 git = "https://github.com/rahix/avr-hal"
@@ -23,4 +22,4 @@ features = ["atmega328p"]
 
 [dependencies.avr-device]
 version = "0.3.4"
-features = ["atmega328p", "rt"]
+features = ["atmega328p"]
