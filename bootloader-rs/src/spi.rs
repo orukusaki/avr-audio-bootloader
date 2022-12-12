@@ -36,4 +36,8 @@ impl WriteOnlySpi {
             }
         }
     }
+
+    pub fn free(self) -> SPI {
+        self.p
+    }
 }

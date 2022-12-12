@@ -1,17 +1,15 @@
 use crate::crc;
-use crate::spm;
+use avr_boot::DataPage;
 
-use const_env__value::value_from_env;
 use core::mem::MaybeUninit;
 
-const SPM_PAGESIZE: usize = value_from_env!("SPM_PAGESIZE": usize);
 const RUNCOMMAND: u8 = 3;
 
 #[repr(C)]
 pub struct Frame {
     pub command: u8,
-    pub page_address: usize,
-    page: [u16; SPM_PAGESIZE / 2],
+    pub page_address: u16,
+    page: DataPage,
     pub checksum: u16,
 }
 
@@ -39,25 +37,23 @@ impl<B: ByteSource> FrameReceiver<B> {
     }
 
     pub fn receive_frame(&mut self) -> Option<&Frame> {
-        self.signal_receiver.sync();
-
         let mut crc = 0u16;
-        let mut crc1 = 0u16;
-        let mut crc2 = 0u16;
+        let mut i: u8 = core::mem::size_of::<Frame>() as u8 - 2;
+
+        self.signal_receiver.sync();
 
         for uninit_byte in self.buffer.as_bytes_mut() {
             let init_byte = uninit_byte.write(self.signal_receiver.get());
 
-            // yes I know this looks silly, it's smaller than enumerating and an if-statement and I
-            // need every byte
-            crc2 = crc1;
-            crc1 = crc;
-            crc = crc::crc_xmodem_update_asm(crc, *init_byte);
+            if i != 0 {
+                crc = crc::crc_xmodem_update_asm(crc, *init_byte);
+                i -= 1;
+            }
         }
-        // Safety: we have just written to every byte in the structure
+        // Safety: we have just written to every byte in the struct
         let frame: &Frame = unsafe { self.buffer.assume_init_ref() };
 
-        if frame.checksum == crc2 {
+        if frame.checksum == crc {
             Some(frame)
         } else {
             None
@@ -65,25 +61,22 @@ impl<B: ByteSource> FrameReceiver<B> {
     }
 }
 
-pub struct FrameWriter {
-    pgm: spm::Writer,
-}
+pub struct FrameWriter {}
 
 impl FrameWriter {
-    pub fn new(pgm: spm::Writer) -> FrameWriter {
-        FrameWriter { pgm }
+    pub fn new() -> FrameWriter {
+        FrameWriter {}
     }
 
     pub fn write(&self, frame: &Frame) {
-        self.pgm.page_erase(frame.page_address);
 
-        let mut write_address = frame.page_address;
-        for w in frame.page.iter() {
-            self.pgm.page_fill(write_address, *w);
-            write_address += 2;
-        }
+        let buff = avr_boot::PageBuffer::new(frame.page_address);
+        buff.store_from(&frame.page);
+    }
+}
 
-        self.pgm.page_write(frame.page_address);
-        self.pgm.rww_enable();
+impl Default for FrameWriter {
+    fn default() -> Self {
+        Self::new()
     }
 }

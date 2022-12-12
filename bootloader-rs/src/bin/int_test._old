@@ -36,9 +36,6 @@ struct Frame {
 // static STATE: Mutex<MyVolatileCell<CaptureState>> = Mutex::new(MyVolatileCell{value: CaptureState::Idle});
 
 static RECEIVED_BYTE: MyVolatileCell<Option<u8>> = MyVolatileCell { value: None };
-static STATE: MyVolatileCell<CaptureState> = MyVolatileCell {
-    value: CaptureState::Idle,
-};
 
 // static gp0 : MyVolatileCell<*mut arduino_hal::pac::cpu::GPIOR0> = MyVolatileCell{value: (&() as *const ()) as *mut arduino_hal::pac::cpu::GPIOR0};
 
@@ -117,40 +114,29 @@ pub unsafe extern "C" fn main() -> ! {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
-enum CaptureState {
-    Idle,
-    Sync,
-    Wait,
-    Run,
-}
-
-#[export_name = "__vector_10"]
-pub unsafe extern "avr-interrupt" fn TIMER1_CAPT() {
+#[avr_device::interrupt(atmega328p)]
+unsafe fn ANALOG_COMP() {
     const TIMER: *mut TC1 = (&() as *const ()) as *mut TC1; // cheeky
+    const CPU: *mut CPU = (&() as *const ()) as *mut CPU;
 
-    static mut DELAY_TIME: u16 = 920;
+    let state = (*CPU).gpior0.read().bits();
+
+    //  (bitcount3(also data available)) (bitcount2) (bitcount1) (bitcount0) (state1)(state0)
+
+    static mut DELAY_TIME: u8 = 23;
     static mut BIT_COUNT: u8 = 0;
 
-    let (state, time) = avr_device::interrupt::free(|cs| {
-        let time = (*TIMER).icr1.read().bits();
-        let state = STATE.get();
-
-        (*TIMER)
-            .tccr1b
-            .modify(|r, w| w.ices1().bit(!r.ices1().bit()));
+    let time = avr_device::interrupt::free(|_| {
+        let time = (*TIMER).tcnt1.read().bits();
         (*TIMER).tcnt1.reset();
-        //TODO: better accuracy by not resetting timer? - calc curr-prev time with overflow
-        //Will break TIMER1_COMPA
-
-        (state, time)
+        time
     });
 
-    let new_state = match state {
-        CaptureState::Idle => capt_idle(&mut BIT_COUNT),
-        CaptureState::Sync => capt_sync(&mut BIT_COUNT),
-        CaptureState::Wait => capt_wait(time, DELAY_TIME),
-        CaptureState::Run => {
+    let new_state = match state & 0x03 {
+        0 => capt_idle(&mut BIT_COUNT),
+        1 => capt_sync(&mut BIT_COUNT),
+        2 => capt_wait(time, DELAY_TIME),
+        3 => {
             capt_run(time, DELAY_TIME, &mut BIT_COUNT);
             CaptureState::Run
         }
@@ -160,14 +146,10 @@ pub unsafe extern "avr-interrupt" fn TIMER1_CAPT() {
         let new_delay_time = (DELAY_TIME + (time * 3 / 4)) / 2;
         DELAY_TIME = new_delay_time;
     }
-
-    avr_device::interrupt::free(|cs| {
-        STATE.set(new_state);
-    });
 }
 
-#[export_name = "__vector_11"]
-pub unsafe extern "avr-interrupt" fn TIMER1_COMPA() {
+#[avr_device::interrupt(atmega328p)]
+unsafe fn TIMER1_COMPA() {
     without_interrupts(|cs| STATE.set(CaptureState::Idle));
 }
 

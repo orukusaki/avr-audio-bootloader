@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(core_intrinsics)]
 
 use arduino_hal::prelude::*;
 use bootloader_rs::frame::FrameReceiver;
