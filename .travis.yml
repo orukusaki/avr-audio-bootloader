@@ -1,23 +1,23 @@
 language: rust
+rust: stable
 os:
   - linux
   - osx
   - windows
 cache: cargo
-before_install:
-    - cd encoder
-script:
-  - cargo test --lib --locked
+install:
   - rustup component add rustfmt-preview
+script:
   - cargo fmt --all -- --check
-  - cargo build --release
+  - cargo test -p hex2wav --lib --locked
+  - cargo build -p hex2wav --release
 before_deploy:
   - git config --local user.name "Peter Smith"
   - git config --local user.email "peter@orukusaki.co.uk"
   - name="hex2wav-$TRAVIS_TAG-$TRAVIS_OS_NAME"
   - mkdir $name
   - cp target/$TARGET/release/hex2wav $name/
-  - cp ../README.md ../LICENSE $name/
+  - cp README.md LICENSE $name/
   - tar czvf $name.tar.gz $name
 deploy:
   provider: releases
@@ -30,28 +30,31 @@ deploy:
     secure: OHBzBiDRAXn2hfE7bGoY03pLqEM5X6XGNmh2w3Z+f0YKMVBNFqr6ExeXOiBEEvB6efJRSO07DYrx4db6Ovbn9GGfC+fho3ekMuMB48sT/dBfdc1yFQsG9wuAk8w5Uz+lBcmwnHeH6PXnepAH6XZEMWE+7EVZ9QGi8fEKQ14N3aCWcj6b83bGBqOkEqs64ZalYMQDfQ17h6bH/GPtZia40OVEriZw505maiR2RzR56ZGA39HPjhb7vfVag0+JxXibGvYLDy8OVVTyPbyeYZk5/1zKWMyDAGok4XfXA4zZ66hr3CtaotH4zZO794E6JCX9vilRMpECmaPKdTicfnjbdXzzqa+WYZcfN7A0gFzFksKzGALqkSIeYAMoQMAuhVImxpyt20CxOGlkhp2+cinFj5j2+xXmmReT0J2M+yFjtpVM5EFhkbo02qPBH6DjJ2ufePnlQpMJeGaKAEr+iRl+gW0ND7wUWQ5GiNIPRh7vTaMsSc4mYci5BHmAI52Nkeqenu7n7ToCEfYAKM7iQH7ygsYLsea3HtcuQMS1/OZHyEDpm0vZJ5Amhm0XNofkyjVO2Gy/j8UMAFl3p1OZKb6NbMiHVJGvO0gCSXJt1q8MOnQJbmZuKsncLT7YyOUK9vD8U6FZF9HXmE2NJ/yjVR4Kgf+NVy3F2l91/bDTtMd5pcE=
 jobs:
   include:
-    - language: python
-      python:
-          - "3.9"
-      cache:
-        directories:
-          - "~/.platformio"
-          - $HOME/.cache/pip
+    - language: rust
+      rust: nightly
+      os: linux
+      dist: jammy
+      addons:
+        apt:
+          packages:
+            - gcc-avr
+            - binutils-avr
+            - avr-libc
+      cache: cargo
       before_install:
-          - cd bootloader
+        - sudo apt-get update -qq
       install:
-          - pip install -U platformio
-          - pio update
+        - rustup component add rustfmt-preview
+        - rustup component add rust-src --toolchain nightly
       script:
-          - pio run
-          - pio check
+        - cargo fmt --all -- --check
+        - cargo build -p bootloader-rs -Z build-std=core --target=avr-unknown-gnu-atmega328 --profile=small --bin main
       before_deploy:
         - git config --local user.name "Peter Smith"
         - git config --local user.email "peter@orukusaki.co.uk"
         - name="bootloader-$TRAVIS_TAG"
         - mkdir $name
-        - cp .pio/build/atmega328p/firmware.hex $name/
-        - cp .pio/build/atmega328p/firmware.elf $name/
+        - cp target/avr-unknown-gnu-atmega328/small/main.elf $name/
         - cp ../README.md ../LICENSE $name/
         - tar czvf $name.tar.gz $name
       deploy:
@@ -61,5 +64,3 @@ jobs:
         on:
           branch: main
           tags: true
-        token:
-          secure: OHBzBiDRAXn2hfE7bGoY03pLqEM5X6XGNmh2w3Z+f0YKMVBNFqr6ExeXOiBEEvB6efJRSO07DYrx4db6Ovbn9GGfC+fho3ekMuMB48sT/dBfdc1yFQsG9wuAk8w5Uz+lBcmwnHeH6PXnepAH6XZEMWE+7EVZ9QGi8fEKQ14N3aCWcj6b83bGBqOkEqs64ZalYMQDfQ17h6bH/GPtZia40OVEriZw505maiR2RzR56ZGA39HPjhb7vfVag0+JxXibGvYLDy8OVVTyPbyeYZk5/1zKWMyDAGok4XfXA4zZ66hr3CtaotH4zZO794E6JCX9vilRMpECmaPKdTicfnjbdXzzqa+WYZcfN7A0gFzFksKzGALqkSIeYAMoQMAuhVImxpyt20CxOGlkhp2+cinFj5j2+xXmmReT0J2M+yFjtpVM5EFhkbo02qPBH6DjJ2ufePnlQpMJeGaKAEr+iRl+gW0ND7wUWQ5GiNIPRh7vTaMsSc4mYci5BHmAI52Nkeqenu7n7ToCEfYAKM7iQH7ygsYLsea3HtcuQMS1/OZHyEDpm0vZJ5Amhm0XNofkyjVO2Gy/j8UMAFl3p1OZKb6NbMiHVJGvO0gCSXJt1q8MOnQJbmZuKsncLT7YyOUK9vD8U6FZF9HXmE2NJ/yjVR4Kgf+NVy3F2l91/bDTtMd5pcE=

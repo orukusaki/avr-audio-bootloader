@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "hex2wav",
+    "bootloader-rs",
+]
+
+[profile.small]
+inherits = "release"
+lto = true
+opt-level = "s" 
+codegen-units = 1
+panic = "abort"
+
+[profile.small.package."*"]
+inherits = "release"
+opt-level = "s" 

@@ -1,0 +1,21 @@
+[package]
+name = "bootloader-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+panic-halt = "0.2.0"
+ufmt = "0.2.0"
+avr-boot = {path = "../../avr-boot/avr-boot"}
+
+[dependencies.arduino-hal]
+git = "https://github.com/rahix/avr-hal"
+features = ["arduino-uno"]
+
+[dependencies.atmega-hal]
+git = "https://github.com/rahix/avr-hal"
+features = ["atmega328p", "rt"]
+
+[dependencies.avr-device]
+version = "0.4.0"
+features = ["atmega328p"]

@@ -1,5 +1,5 @@
 .pio
 .clang_complete
 .gcc-flags.json
-encoder/target
+target
 bootloader/.pio
